@@ -31,7 +31,7 @@ func main() {
   url: https://github.com/gophercises/urlshort/tree/solution
   `
 
-	yamlToConvert := []byte{}
+	fileToConvert := []byte{}
 
 	// import Yaml file based on flag presence
 	if *yamlPtr != "" {
@@ -39,12 +39,12 @@ func main() {
 		if err != nil {
 			log.Fatalf("cannot open yaml file: %v", err)
 		}
-		yamlToConvert = yamlFile
+		fileToConvert = yamlFile
 	} else {
-		yamlToConvert = []byte(yamlString)
+		fileToConvert = []byte(yamlString)
 	}
 
-	yamlHandler, err := YAMLHandler(yamlToConvert, mapHandler)
+	yamlHandler, err := YAMLHandler(fileToConvert, mapHandler)
 	if err != nil {
 		panic(err)
 	}
