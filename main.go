@@ -1,11 +1,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	// Define flags
+	yamlPtr := flag.String("yamlImport", "", "where the handler should look to import yaml routes")
+	flag.Parse()
+
 	mux := defaultMux()
 
 	// Build the MapHandler using the mux as the fallback
@@ -17,13 +24,27 @@ func main() {
 
 	// Build the YAMLHandler using the mapHandler as the
 	// fallback
-	yaml := `
+	yamlString := `
 - path: /urlshort
   url: https://github.com/gophercises/urlshort
 - path: /urlshort-final
   url: https://github.com/gophercises/urlshort/tree/solution
   `
-	yamlHandler, err := YAMLHandler([]byte(yaml), mapHandler)
+
+	yamlToConvert := []byte{}
+
+	// import Yaml file based on flag presence
+	if *yamlPtr != "" {
+		yamlFile, err := os.ReadFile(*yamlPtr)
+		if err != nil {
+			log.Fatalf("cannot open yaml file: %v", err)
+		}
+		yamlToConvert = yamlFile
+	} else {
+		yamlToConvert = []byte(yamlString)
+	}
+
+	yamlHandler, err := YAMLHandler(yamlToConvert, mapHandler)
 	if err != nil {
 		panic(err)
 	}
