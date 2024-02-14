@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -10,6 +11,17 @@ import (
 type ParsedFile struct {
 	Path string `yaml:"path" json:"path"`
 	URL  string `yaml:"url" json:"url"`
+}
+
+func JSONHandler(jsonInput []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	var parsedJson []ParsedFile
+	err := json.Unmarshal(jsonInput, &parsedJson)
+	if err != nil {
+		log.Fatalf("cannot unmarshal json data: %v", err)
+	}
+
+	parsedMap := parseFileToMap(parsedJson)
+	return MapHandler(parsedMap, fallback), nil
 }
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -61,10 +73,10 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	return MapHandler(pathMap, fallback), nil
 }
 
-func parseFileToMap(parsedYaml []ParsedFile) map[string]string {
+func parseFileToMap(parsedFile []ParsedFile) map[string]string {
 	var shortenerKeys = make(map[string]string)
 
-	for _, entry := range parsedYaml {
+	for _, entry := range parsedFile {
 		shortenerKeys[entry.Path] = entry.URL
 	}
 

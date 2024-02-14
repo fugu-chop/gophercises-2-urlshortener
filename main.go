@@ -13,6 +13,7 @@ func main() {
 
 	// Define flags
 	yamlPtr := flag.String("yamlImport", "", "where the handler should look to import yaml routes")
+	jsonPtr := flag.String("jsonImport", "", "where the handler should look to import json routes")
 	flag.Parse()
 
 	mux := defaultMux()
@@ -31,6 +32,16 @@ func main() {
 			log.Fatalf("cannot open yaml file: %v", err)
 		}
 		handler, err = YAMLHandler(yamlFile, mapHandler)
+		if err != nil {
+			panic(err)
+		}
+		// import JSON file based on flag presence
+	} else if *jsonPtr != "" {
+		jsonFile, err := os.ReadFile(*jsonPtr)
+		if err != nil {
+			log.Fatalf("cannot open yaml file: %v", err)
+		}
+		handler, err = JSONHandler(jsonFile, mapHandler)
 		if err != nil {
 			panic(err)
 		}
