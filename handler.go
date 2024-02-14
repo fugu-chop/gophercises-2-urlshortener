@@ -7,9 +7,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type ParsedYaml struct {
-	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
+type ParsedFile struct {
+	Path string `yaml:"path" json:"path"`
+	URL  string `yaml:"url" json:"url"`
 }
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -49,7 +49,7 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	// Parse YAML
 	// We require a slice return type as otherwise only the
 	// first entry in the YAML is retained
-	var output []ParsedYaml
+	var output []ParsedFile
 
 	err := yaml.Unmarshal(yml, &output)
 	if err != nil {
@@ -57,11 +57,11 @@ func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	}
 
 	// check if path exists
-	pathMap := parseYamlToMap(output)
+	pathMap := parseFileToMap(output)
 	return MapHandler(pathMap, fallback), nil
 }
 
-func parseYamlToMap(parsedYaml []ParsedYaml) map[string]string {
+func parseFileToMap(parsedYaml []ParsedFile) map[string]string {
 	var shortenerKeys = make(map[string]string)
 
 	for _, entry := range parsedYaml {
