@@ -19,16 +19,14 @@ type ParsedYaml struct {
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	// This is the boilerplate wrapping code that returns a
-	// http.HandlerFunc function type
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		redirectUrl, ok := pathsToUrls[r.URL.Path]
 		if ok {
 			http.Redirect(w, r, redirectUrl, http.StatusFound)
 		} else {
 			fallback.ServeHTTP(w, r)
 		}
-	})
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
@@ -48,29 +46,19 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Parse YAML
-		// We require a slice return type as otherwise only the
-		// first entry in the YAML is retained
-		var output []ParsedYaml
+	// Parse YAML
+	// We require a slice return type as otherwise only the
+	// first entry in the YAML is retained
+	var output []ParsedYaml
 
-		err := yaml.Unmarshal(yml, &output)
-		if err != nil {
-			log.Fatalf("cannot unmarshal yaml data: %v", err)
-		}
+	err := yaml.Unmarshal(yml, &output)
+	if err != nil {
+		log.Fatalf("cannot unmarshal yaml data: %v", err)
+	}
 
-		// check if path exists
-		pathMap := parseYamlToMap(output)
-		// Attempting to use MapHandler here doesn't appear
-		// to work - there is some weird double redirect
-		// happening under the hood somewhere
-		redirectUrl, ok := pathMap[r.URL.Path]
-		if ok {
-			http.Redirect(w, r, redirectUrl, http.StatusFound)
-		} else {
-			fallback.ServeHTTP(w, r)
-		}
-	}), nil
+	// check if path exists
+	pathMap := parseYamlToMap(output)
+	return MapHandler(pathMap, fallback), nil
 }
 
 func parseYamlToMap(parsedYaml []ParsedYaml) map[string]string {
