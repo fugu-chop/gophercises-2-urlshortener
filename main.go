@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/boltdb/bolt"
 )
 
 func main() {
@@ -14,6 +17,7 @@ func main() {
 	// Define flags
 	yamlPtr := flag.String("yamlImport", "", "where the handler should look to import yaml routes")
 	jsonPtr := flag.String("jsonImport", "", "where the handler should look to import json routes")
+	dbPtr := flag.Bool("dbImport", false, "whether or not the handler should access a BoltDB instance for routes")
 	flag.Parse()
 
 	mux := defaultMux()
@@ -45,6 +49,18 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		// Use BoltDB if flag is enabled
+	} else if *dbPtr {
+		db, err := bolt.Open(
+			"routes.db",
+			0600,
+			&bolt.Options{Timeout: 2 * time.Second},
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		seedDB(db, pathsToUrls)
 	} else {
 		handler = mapHandler
 	}

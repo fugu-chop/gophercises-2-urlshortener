@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/boltdb/bolt"
 	"gopkg.in/yaml.v2"
 )
 
@@ -81,4 +82,25 @@ func parseFileToMap(parsedFile []ParsedFile) map[string]string {
 	}
 
 	return shortenerKeys
+}
+
+func seedDB(db *bolt.DB, routes map[string]string) error {
+	err := db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("Routes"))
+		if err != nil {
+			log.Fatalf("cannot create bucket in database: %v", err)
+		}
+
+		for k, v := range routes {
+			b.Put([]byte(k), []byte(v))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalf("cannot seed database: %v", err)
+	}
+
+	return nil
 }
