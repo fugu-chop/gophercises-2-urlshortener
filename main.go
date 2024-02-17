@@ -11,6 +11,8 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+const tableName = "routes.db"
+
 func main() {
 	var handler http.HandlerFunc
 
@@ -52,7 +54,7 @@ func main() {
 		// Use BoltDB if flag is enabled
 	} else if *dbPtr {
 		db, err := bolt.Open(
-			"routes.db",
+			tableName,
 			0600,
 			&bolt.Options{Timeout: 2 * time.Second},
 		)
@@ -61,6 +63,7 @@ func main() {
 		}
 		defer db.Close()
 		seedDB(db, pathsToUrls)
+		handler = DBHandler(db, mux)
 	} else {
 		handler = mapHandler
 	}
